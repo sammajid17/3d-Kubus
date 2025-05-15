@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jaring-jaring Kubus Lengkap</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      overflow: hidden;
+      height: 100%;
+      font-family: sans-serif;
+      user-select: none;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .scene {
+      width: 100%;
+      height: 80%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+    }
+
+    .cube {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.8s ease;
+    }
+
+    .face {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: rgba(0, 128, 255, 0.9);
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1em;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      transition: transform 0.8s ease;
+    }
+
+    /* Default 3D cube positions */
+    .face.front  { transform: rotateY(0deg)    translateZ(100px); }
+    .face.back   { transform: rotateY(180deg)  translateZ(100px); }
+    .face.right  { transform: rotateY(90deg)   translateZ(100px); }
+    .face.left   { transform: rotateY(-90deg)  translateZ(100px); }
+    .face.top    { transform: rotateX(90deg)   translateZ(100px); }
+    .face.bottom { transform: rotateX(-90deg)  translateZ(100px); }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    select, button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    select {
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="scene">
+    <div id="cube" class="cube">
+      <div class="face front">Depan</div>
+      <div class="face back">Belakang</div>
+      <div class="face right">Kanan</div>
+      <div class="face left">Kiri</div>
+      <div class="face top">Atas</div>
+      <div class="face bottom">Bawah</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="toggleBtn">Buka Jaring</button>
+    <select id="netSelect">
+      <option value="1">Pola 1</option>
+      <option value="2">Pola 2</option>
+      <option value="3">Pola 3</option>
+      <option value="4">Pola 4</option>
+      <option value="5">Pola 5</option>
+      <option value="6">Pola 6</option>
+      <option value="7">Pola 7</option>
+      <option value="8">Pola 8</option>
+      <option value="9">Pola 9</option>
+      <option value="10">Pola 10</option>
+      <option value="11">Pola 11</option>
+    </select>
+  </div>
+</div>
+
+<script>
+  const cube = document.getElementById('cube');
+  const btn = document.getElementById('toggleBtn');
+  const select = document.getElementById('netSelect');
+
+  const faces = {
+    front: cube.querySelector('.face.front'),
+    back: cube.querySelector('.face.back'),
+    left: cube.querySelector('.face.left'),
+    right: cube.querySelector('.face.right'),
+    top: cube.querySelector('.face.top'),
+    bottom: cube.querySelector('.face.bottom'),
+  };
+
+  let isOpen = false;
+  let netType = '1';
+  let rotationX = 20;
+  let rotationY = -30;
+  let isDragging = false;
+  let prevX, prevY;
+
+  const nets = {
+    '1': {
+      front: [0, 0], right: [1, 0], back: [2, 0], left: [-1, 0], top: [0, -1], bottom: [0, 1]
+    },
+    '2': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0], back: [0, 2]
+    },
+    '3': {
+      front: [0, 0], right: [1, 0], back: [2, 0], left: [-1, 0], top: [-1, -1], bottom: [1, 1]
+    },
+    '4': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [1, 0], right: [-1, 0], back: [0, 2]
+    },
+    '5': {
+      front: [0, 0], right: [1, 0], back: [2, 0], top: [0, -1], bottom: [1, 1], left: [-1, 1]
+    },
+    '6': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [-1, 1], right: [1, 1], back: [0, 2]
+    },
+    '7': {
+      front: [0, 0], left: [-1, 0], right: [1, 0], back: [0, 1], top: [-1, -1], bottom: [1, 1]
+    },
+    '8': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0], back: [-1, 1]
+    },
+    '9': {
+      front: [0, 0], top: [0, -1], bottom: [1, 1], left: [-1, 0], right: [1, 0], back: [2, 0]
+    },
+    '10': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [-1, 1], right: [1, 1], back: [0, 2]
+    },
+    '11': {
+      front: [0, 0], top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0], back: [2, 0]
+    }
+  };
+
+  function applyNet(type) {
+    const unit = 200;
+    const net = nets[type];
+    for (let key in faces) {
+      const [x, y] = net[key];
+      faces[key].style.transform = `translate3d(${x * unit}px, ${y * unit}px, 0)`;
+    }
+  }
+
+  function resetToCube() {
+    faces.front.style.transform = 'rotateY(0deg) translateZ(100px)';
+    faces.back.style.transform = 'rotateY(180deg) translateZ(100px)';
+    faces.left.style.transform = 'rotateY(-90deg) translateZ(100px)';
+    faces.right.style.transform = 'rotateY(90deg) translateZ(100px)';
+    faces.top.style.transform = 'rotateX(90deg) translateZ(100px)';
+    faces.bottom.style.transform = 'rotateX(-90deg) translateZ(100px)';
+  }
+
+  btn.addEventListener('click', () => {
+    isOpen = !isOpen;
+    btn.textContent = isOpen ? 'Lipat Kembali' : 'Buka Jaring';
+    if (isOpen) {
+      applyNet(netType);
+    } else {
+      resetToCube();
+    }
+    updateRotation();
+  });
+
+  select.addEventListener('change', e => {
+    netType = e.target.value;
+    if (isOpen) {
+      applyNet(netType);
+    }
+  });
+
+  // Mouse and touch rotation
+  window.addEventListener('mousedown', e => {
+    isDragging = true;
+    prevX = e.clientX;
+    prevY = e.clientY;
+    document.body.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+    document.body.style.cursor = 'default';
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevX;
+    const dy = e.clientY - prevY;
+    prevX = e.clientX;
+    prevY = e.clientY;
+    rotationY += dx * 0.4;
+    rotationX -= dy * 0.4;
+    rotationX = Math.max(-90, Math.min(90, rotationX));
+    requestAnimationFrame(updateRotation);
+  });
+
+  window.addEventListener('touchstart', e => {
+    isDragging = true;
+    prevX = e.touches[0].clientX;
+    prevY = e.touches[0].clientY;
+  });
+
+  window.addEventListener('touchend', () => isDragging = false);
+  window.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - prevX;
+    const dy = touch.clientY - prevY;
+    prevX = touch.clientX;
+    prevY = touch.clientY;
+    rotationY += dx * 0.4;
+    rotationX -= dy * 0.4;
+    rotationX = Math.max(-90, Math.min(90, rotationX));
+    requestAnimationFrame(updateRotation);
+  });
+
+  function updateRotation() {
+    cube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+  }
+
+  resetToCube();
+  updateRotation();
+</script>
+</body>
+</html>
